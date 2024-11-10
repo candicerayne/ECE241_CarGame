@@ -1,0 +1,1 @@
+Our project will be an implementation of a car racing game in which the user controls a car on a strip of road. The driver can collect coins on the road and increase the user’s score, but if they run into any obstacles on the path, the game will end. The user can also adjust the difficulty of the game, which is determined by the speed of the car.
