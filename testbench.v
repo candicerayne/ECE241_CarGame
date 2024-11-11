@@ -8,7 +8,7 @@ module testbench();
 
     // wire signals are used for outputs
     wire EnterEn, LeftEn, RightEn;
-	wire [7:0] key_data;
+    wire [7:0] key_data;
 
     // instantiate the design under test
     keyboard K1 (CLOCK_50, Reset, received_data, EnterEn, LeftEn, RightEn, received_data_en, key_data);
@@ -32,9 +32,9 @@ module testbench();
 
         // make code: 5A
         #20 received_data <= 8'h5A;
-            received_data_en <= 1'b1; // Assert received data
+        received_data_en <= 1'b1; // Assert received data
         #20 received_data_en <= 1'b0; // Deassert after one clock cycle
-		#20
+	#20
 
 
         // break code: F0,5A
@@ -78,8 +78,8 @@ module testbench();
         #20 received_data_en <= 1'b0;
 
         // break code: E0,F0,74
-         #20 received_data <= 8'hE0;
-         received_data_en <= 1'b1;
+        #20 received_data <= 8'hE0;
+        received_data_en <= 1'b1;
         #20 received_data_en <= 1'b0;
         #20 received_data <= 8'hF0;
         received_data_en <= 1'b1;
