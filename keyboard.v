@@ -40,7 +40,7 @@ module keyboard(CLOCK_50, Reset, EnterEn, LeftEn, RightEn);
                 IDLE = 2'b00, KEY_PRESSED = 2'b01, EXT_MAKE_CODE = 2'b10, BREAK_CODE = 2'b11;           // state codes
 
     reg [1:0] y, Y;     // current and next state
-	reg enter_en, left_en, right_en;
+    reg enter_en, left_en, right_en;
 
     always @(*) begin
         case (y)
