@@ -1,4 +1,4 @@
-module background_scroll(
+module moving_background(
     CLOCK_50, SW, KEY, VGA_R, VGA_G, VGA_B,
     VGA_HS, VGA_VS, VGA_BLANK_N, VGA_SYNC_N, VGA_CLK
 );
