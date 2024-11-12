@@ -29,8 +29,7 @@ module moving_background(
     wire half_sec_enable, quarter_sec_enable, eighth_sec_enable;
 
 
-    speed s1(.CLOCK_50(CLOCK_50), .SW(SW), .LEDR({half_sec_enable, quarter_sec_enable, eighth_sec_enable})
-    );
+    speed s1(.CLOCK_50(CLOCK_50), .SW(SW), .LEDR({half_sec_enable, quarter_sec_enable, eighth_sec_enable}));
 
     always @(posedge CLOCK_50) begin
         if (!KEY[0]) begin
