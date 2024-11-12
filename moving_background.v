@@ -4,7 +4,7 @@ module moving_background(
 );
 
     parameter XSCREEN = 160; 
-    parameter YSCREEN = 120;   
+    parameter YSCREEN = 120;  
     parameter SCROLL_SPEED = 1;    
 
     input CLOCK_50;
