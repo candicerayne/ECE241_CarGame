@@ -36,8 +36,8 @@ module keyboard(CLOCK_50, Reset, EnterEn, LeftEn, RightEn);
     end
 
     // State machine to detect make and break codes
-    parameter ENTER = 8'h5A, LEFT = 8'h6B, RIGHT = 8'h74, EXTENDED = 8'hE0, BREAK = 8'hF0,      // key codes
-                IDLE = 2'b00, KEY_PRESSED = 2'b01, EXT_MAKE_CODE = 2'b10, BREAK_CODE = 2'b11;                        // state codes
+    parameter ENTER = 8'h5A, LEFT = 8'h6B, RIGHT = 8'h74, EXTENDED = 8'hE0, BREAK = 8'hF0,      	// key codes
+                IDLE = 2'b00, KEY_PRESSED = 2'b01, EXT_MAKE_CODE = 2'b10, BREAK_CODE = 2'b11;           // state codes
 
     reg [1:0] y, Y;     // current and next state
 	reg enter_en, left_en, right_en;
