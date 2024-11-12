@@ -34,7 +34,8 @@ module moving_background(
     always @(posedge CLOCK_50) begin
         if (!KEY[0]) begin
             scroll_offset <= 0;
-        end else begin
+        end 
+        else begin
             // update scroll when any of the enable signals is high
             if (half_sec_enable || quarter_sec_enable || eighth_sec_enable) begin
                 scroll_offset <= scroll_offset + SCROLL_SPEED;
