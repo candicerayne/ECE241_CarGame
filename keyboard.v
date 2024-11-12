@@ -50,31 +50,31 @@ module keyboard(CLOCK_50, Reset, EnterEn, LeftEn, RightEn);
                     else
                         Y = IDLE;
                 end
-		KEY_PRESSED:	begin
-							if (key_data == ENTER) begin             // key_data = 5A
-							enter_en = 1'b1;
-							left_en = 1'b0;
-							right_en = 1'b0;
-							Y = IDLE;
-						end
-						else if (key_data == EXTENDED)
-							Y = EXT_MAKE_CODE;
-						else if (key_data == BREAK)
-							Y = BREAK_CODE;
-						else
-							Y = IDLE;
-						end
+		KEY_PRESSED: begin
+			    	if (key_data == ENTER) begin             // key_data = 5A
+					enter_en = 1'b1;
+					left_en = 1'b0;
+					right_en = 1'b0;
+					Y = IDLE;
+				end
+			    	 else if (key_data == EXTENDED)
+					Y = EXT_MAKE_CODE;
+				else if (key_data == BREAK)
+					Y = BREAK_CODE;
+				else
+					Y = IDLE;
+			     end
         EXT_MAKE_CODE:  begin
                             if (key_data == LEFT) begin              // key_data = E0,6B
                                 enter_en = 1'b0;
-								left_en = 1'b1;
-								right_en = 1'b0;
+				left_en = 1'b1;
+				right_en = 1'b0;
                                 Y = IDLE;
                             end
                             else if (key_data == RIGHT) begin        // key_data = E0,74
                                 enter_en = 1'b0;
-								left_en = 1'b0;
-								right_en = 1'b1;
+				left_en = 1'b0;
+				right_en = 1'b1;
                                 Y = IDLE;
                             end
                             else if (key_data == BREAK)
@@ -85,19 +85,19 @@ module keyboard(CLOCK_50, Reset, EnterEn, LeftEn, RightEn);
         BREAK_CODE: begin
                         if (key_data == ENTER) begin
                             enter_en = 1'b0;
-							left_en = 1'b0;
-							right_en = 1'b0;
+			    left_en = 1'b0;
+			    right_en = 1'b0;
                             Y = IDLE;
                         end
                         else if (key_data == LEFT) begin
-							enter_en = 1'b0;
+			    enter_en = 1'b0;
                             left_en = 1'b0;
-							right_en = 1'b0;
+			    right_en = 1'b0;
                             Y = IDLE;
                         end
                         else if (key_data == RIGHT) begin
-							enter_en = 1'b0;
-							left_en = 1'b0;
+			    enter_en = 1'b0;
+			    left_en = 1'b0;
                             right_en = 1'b0;
                             Y = IDLE;
                         end
@@ -116,13 +116,13 @@ module keyboard(CLOCK_50, Reset, EnterEn, LeftEn, RightEn);
     always @(posedge CLOCK_50) begin
         if (Reset) begin
             y <= IDLE;
-			EnterEn <= 1'b0;
+	    EnterEn <= 1'b0;
             LeftEn <= 1'b0;
             RightEn <= 1'b0;
 		end
         else
             y <= Y;
-			EnterEn <= enter_en;
+	    EnterEn <= enter_en;
             LeftEn <= left_en;
             RightEn <= right_en;
     end
