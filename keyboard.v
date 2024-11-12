@@ -46,7 +46,7 @@ module keyboard(CLOCK_50, Reset, EnterEn, LeftEn, RightEn);
         case (y)
         IDLE:   begin
                     if (received_data_en)
-						Y = KEY_PRESSED;
+			Y = KEY_PRESSED;
                     else
                         Y = IDLE;
                 end
