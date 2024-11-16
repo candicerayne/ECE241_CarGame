@@ -1,4 +1,4 @@
-module keyboard(CLOCK_50, KEY, PS2_CLK, PS2_DAT, LEDR);
+module keyboard(CLOCK_50, KEY, PS2_CLK, PS2_DAT, EnterEn, LeftEn, RightEn);
     // make code -> when key is pressed
     // break code -> when key is released
 
@@ -10,11 +10,11 @@ module keyboard(CLOCK_50, KEY, PS2_CLK, PS2_DAT, LEDR);
     // right arrow key break code: E0,F0,74
 
     input CLOCK_50;
-    //output reg EnterEn, LeftEn, RightEn;    // key enable signals
-	reg EnterEn, LeftEn, RightEn;
-	output [2:0] LEDR;
-	input [0:0] KEY;
-	inout PS2_CLK, PS2_DAT;
+    output reg EnterEn, LeftEn, RightEn;    // key enable signals
+    //reg EnterEn, LeftEn, RightEn;
+    output [2:0] LEDR;
+    input [0:0] KEY;
+    inout PS2_CLK, PS2_DAT;
 
 
     wire [7:0] received_data;
@@ -86,7 +86,7 @@ module keyboard(CLOCK_50, KEY, PS2_CLK, PS2_DAT, LEDR);
 			if (key_data == EXTENDED)
 			    Y = EXT_MAKE_CODE;
 			else
-				Y = ENTER_KEY;
+			    Y = ENTER_KEY;
 		else
 			Y = LEFT_KEY;
 						  
@@ -109,11 +109,11 @@ module keyboard(CLOCK_50, KEY, PS2_CLK, PS2_DAT, LEDR);
             y <= Y;
     end
 	 
-    //assign EnterEn = (y == ENTER_KEY);
-    //assign LeftEn = (y == LEFT_KEY);
-    //assign RightEn = (y == RIGHT_KEY);
+    assign EnterEn = (y == ENTER_KEY);
+    assign LeftEn = (y == LEFT_KEY);
+    assign RightEn = (y == RIGHT_KEY);
     
-    assign LEDR[2] = (y == ENTER_KEY);
-    assign LEDR[1] = (y == LEFT_KEY);
-    assign LEDR[0] = (y == RIGHT_KEY);
+    //assign LEDR[2] = (y == ENTER_KEY);
+    //assign LEDR[1] = (y == LEFT_KEY);
+    //assign LEDR[0] = (y == RIGHT_KEY);
 endmodule
