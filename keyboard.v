@@ -38,87 +38,77 @@ module keyboard(CLOCK_50, KEY, PS2_CLK, PS2_DAT, LEDR);
     // State machine to detect make and break codes
     parameter ENTER = 8'h5A, LEFT = 8'h6B, RIGHT = 8'h74, EXTENDED = 8'hE0, BREAK = 8'hF0,      	// key codes
                 IDLE = 3'b000, KEY_PRESSED = 3'b001, EXT_MAKE_CODE = 3'b010, BREAK_CODE = 3'b011,
-                ENTER_KEY = 3'b100, LEFT_KEY = 3'b101, RIGHT_KEY = 3'b110;                          // state codes
+                ENTER_KEY = 3'b100, LEFT_KEY = 3'b101, RIGHT_KEY = 3'b110;                        // state codes
 
     reg [2:0] y, Y;     // current and next state
 
     always @(*) begin
         case (y)
         IDLE:   begin
-                    if (received_data_en)
-			            Y = KEY_PRESSED;
+                    if (received_data_en == 1'b1)
+							  if (key_data == ENTER)            // key_data = 5A
+									Y = ENTER_KEY;
+								else if (key_data == BREAK)
+									Y = BREAK_CODE;
+								else
+									Y = EXT_MAKE_CODE;
                     else
                         Y = IDLE;
                 end
-			KEY_PRESSED:begin
-                    if (received_data_en == 1'b1)
-                        if (key_data == ENTER) begin             // key_data = 5A
+			KEY_PRESSED:if (received_data_en == 1'b1)begin
+                        if (key_data == ENTER)            // key_data = 5A
                             Y = ENTER_KEY;
-                        end
                         else if (key_data == EXTENDED)
                             Y = EXT_MAKE_CODE;
                         else if (key_data == BREAK)
                             Y = BREAK_CODE;
-                    else
-                        Y = IDLE;
-			        end
-        EXT_MAKE_CODE:  begin
-                        if (received_data_en == 1'b1)
-                            if (received_data_en && key_data == LEFT) begin              // key_data = E0,6B
-				                Y = LEFT_KEY;
-                            end
-                            else if (received_data_en && key_data == RIGHT) begin        // key_data = E0,74
-				                Y = RIGHT_KEY;
-                            end
-                            else if (received_data_en && key_data == BREAK)
+								else
+									Y = KEY_PRESSED;
+							end
+							else
+								Y = KEY_PRESSED;
+					  
+        EXT_MAKE_CODE:  if (received_data_en == 1'b1) begin
+                            if (key_data == LEFT)             	// key_data = E0,6B
+										Y = LEFT_KEY;
+                            else if (key_data == RIGHT)        // key_data = E0,74
+										Y = RIGHT_KEY;
+                            else if (key_data == BREAK)
                                 Y = BREAK_CODE;
-                        else
+									 else
+										Y = EXT_MAKE_CODE;
+								end
+								else
+										Y = EXT_MAKE_CODE;
+								
+        BREAK_CODE: if (received_data_en == 1'b1)
+                        Y = IDLE;
+							else
+								Y = BREAK_CODE;
+						  
+        ENTER_KEY:  if (received_data_en == 1'b1) 
+								if (key_data == ENTER)            // key_data = 5A
+									Y = ENTER_KEY;
+								else
+									Y = KEY_PRESSED;
+						  else
+								Y = ENTER_KEY;
+						  
+			LEFT_KEY:   if (received_data_en == 1'b1)
+								if (key_data == EXTENDED)
                             Y = EXT_MAKE_CODE;
-                        end
-        BREAK_CODE: begin
-                    if (received_data_en == 1'b1)
-                        if (key_data == ENTER || key_data == LEFT || key_data == RIGHT) begin
-                            Y = IDLE;
-                        end
-                    else
-                            Y = BREAK_CODE;
-                    end
-        ENTER_KEY:  begin
-                    if (received_data_en == 1'b1)
-                        if (key_data == ENTER) begin             // key_data = 5A
-                            Y = ENTER_KEY;
-                        end
-                        else if (key_data == EXTENDED)
+								else
+									Y = ENTER_KEY;
+							else
+									Y = LEFT_KEY;
+						  
+         RIGHT_KEY:  if (received_data_en == 1'b1)
+								if (key_data == EXTENDED)
                             Y = EXT_MAKE_CODE;
-                        else if (key_data == BREAK)
-                            Y = BREAK_CODE;
-                    else
-                        Y = ENTER_KEY;
-                    end
-	    LEFT_KEY:   begin
-                    if (received_data_en == 1'b1)
-                        if (key_data == ENTER) begin             // key_data = 5A
-                            Y = ENTER_KEY;
-                        end
-                        else if (key_data == EXTENDED)
-                            Y = EXT_MAKE_CODE;
-                        else if (key_data == BREAK)
-                            Y = BREAK_CODE;
-                    else
-                        Y = LEFT_KEY;
-                    end
-        RIGHT_KEY:  begin
-                    if (received_data_en == 1'b1)
-                        if (key_data == ENTER) begin             // key_data = 5A
-                            Y = ENTER_KEY;
-                        end
-                        else if (key_data == EXTENDED)
-                            Y = EXT_MAKE_CODE;
-                        else if (key_data == BREAK)
-                            Y = BREAK_CODE;
-                    else
-                        Y = RIGHT_KEY;
-                    end
+								else
+									Y = ENTER_KEY;
+							else
+									Y = RIGHT_KEY;
         default: Y = IDLE;
         endcase
     end
