@@ -1,4 +1,4 @@
-module keyboard(CLOCK_50, SW, PS2_CLK, PS2_DAT, LEDR);
+module keyboard(CLOCK_50, KEY, PS2_CLK, PS2_DAT, LEDR);
     // make code -> when key is pressed
     // break code -> when key is released
 
@@ -50,7 +50,7 @@ module keyboard(CLOCK_50, SW, PS2_CLK, PS2_DAT, LEDR);
                     else
                         Y = IDLE;
                 end
-		KEY_PRESSED:begin
+			KEY_PRESSED:begin
                     if (received_data_en == 1'b1)
                         if (key_data == ENTER) begin             // key_data = 5A
                             Y = ENTER_KEY;
@@ -84,20 +84,38 @@ module keyboard(CLOCK_50, SW, PS2_CLK, PS2_DAT, LEDR);
                             Y = BREAK_CODE;
                     end
         ENTER_KEY:  begin
-                    if (received_data_en)
-                        Y = IDLE;
+                    if (received_data_en == 1'b1)
+                        if (key_data == ENTER) begin             // key_data = 5A
+                            Y = ENTER_KEY;
+                        end
+                        else if (key_data == EXTENDED)
+                            Y = EXT_MAKE_CODE;
+                        else if (key_data == BREAK)
+                            Y = BREAK_CODE;
                     else
                         Y = ENTER_KEY;
                     end
 	    LEFT_KEY:   begin
-                    if (received_data_en)
-                        Y = IDLE;
+                    if (received_data_en == 1'b1)
+                        if (key_data == ENTER) begin             // key_data = 5A
+                            Y = ENTER_KEY;
+                        end
+                        else if (key_data == EXTENDED)
+                            Y = EXT_MAKE_CODE;
+                        else if (key_data == BREAK)
+                            Y = BREAK_CODE;
                     else
                         Y = LEFT_KEY;
                     end
         RIGHT_KEY:  begin
-                    if (received_data_en)
-                        Y = IDLE;
+                    if (received_data_en == 1'b1)
+                        if (key_data == ENTER) begin             // key_data = 5A
+                            Y = ENTER_KEY;
+                        end
+                        else if (key_data == EXTENDED)
+                            Y = EXT_MAKE_CODE;
+                        else if (key_data == BREAK)
+                            Y = BREAK_CODE;
                     else
                         Y = RIGHT_KEY;
                     end
