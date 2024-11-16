@@ -13,7 +13,7 @@ module gamescreendisplay(
     output VGA_SYNC_N,
     output VGA_CLK
 );
-    wire [1:0] SCREEN;
+    wire [1:0] SCREEN; 
 
     gamedisplay_fsm fsm (
         .CLOCK_50(CLOCK_50),
