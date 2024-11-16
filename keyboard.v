@@ -13,7 +13,7 @@ module keyboard(CLOCK_50, SW, PS2_CLK, PS2_DAT, LEDR);
     //output reg EnterEn, LeftEn, RightEn;    // key enable signals
 	reg EnterEn, LeftEn, RightEn;
 	output [2:0] LEDR;
-	input [0:0] SW;
+	input [0:0] KEY;
 	inout PS2_CLK, PS2_DAT;
 
 
@@ -22,15 +22,15 @@ module keyboard(CLOCK_50, SW, PS2_CLK, PS2_DAT, LEDR);
     wire received_data_en;
 
     // instantiate PS2_Controller
-    PS2_Controller keyb(.CLOCK_50(CLOCK_50), .reset(~SW[0]), .PS2_CLK(PS2_CLK), .PS2_DAT(PS2_DAT), .received_data(received_data), .received_data_en(received_data_en));
+    PS2_Controller keyb(.CLOCK_50(CLOCK_50), .reset(~KEY[0]), .PS2_CLK(PS2_CLK), .PS2_DAT(PS2_DAT), .received_data(received_data), .received_data_en(received_data_en));
 
 
     // shift register to load in received_data bit when received_en is high
     always @(posedge CLOCK_50) begin
-        if (SW[0]) begin
+        if (KEY[0] == 1'b0) begin
             key_data <= 8'h0;
 				end
-        else if (received_data_en) begin
+        else if (received_data_en == 1'b1) begin
             key_data <= received_data;
         end
     end
@@ -51,17 +51,19 @@ module keyboard(CLOCK_50, SW, PS2_CLK, PS2_DAT, LEDR);
                         Y = IDLE;
                 end
 		KEY_PRESSED:begin
-                        if (received_data_en && key_data == ENTER) begin             // key_data = 5A
+                    if (received_data_en == 1'b1)
+                        if (key_data == ENTER) begin             // key_data = 5A
                             Y = ENTER_KEY;
                         end
-                        else if (received_data_en && key_data == EXTENDED)
+                        else if (key_data == EXTENDED)
                             Y = EXT_MAKE_CODE;
-                        else if ( received_data_en && key_data == BREAK)
+                        else if (key_data == BREAK)
                             Y = BREAK_CODE;
-                        else
-                            Y = IDLE;
+                    else
+                        Y = IDLE;
 			        end
         EXT_MAKE_CODE:  begin
+                        if (received_data_en == 1'b1)
                             if (received_data_en && key_data == LEFT) begin              // key_data = E0,6B
 				                Y = LEFT_KEY;
                             end
@@ -70,14 +72,15 @@ module keyboard(CLOCK_50, SW, PS2_CLK, PS2_DAT, LEDR);
                             end
                             else if (received_data_en && key_data == BREAK)
                                 Y = BREAK_CODE;
-                            else
-                                Y = EXT_MAKE_CODE;
+                        else
+                            Y = EXT_MAKE_CODE;
                         end
         BREAK_CODE: begin
+                    if (received_data_en == 1'b1)
                         if (key_data == ENTER || key_data == LEFT || key_data == RIGHT) begin
                             Y = IDLE;
                         end
-                        else
+                    else
                             Y = BREAK_CODE;
                     end
         ENTER_KEY:  begin
@@ -103,7 +106,7 @@ module keyboard(CLOCK_50, SW, PS2_CLK, PS2_DAT, LEDR);
     end
 
     always @(posedge CLOCK_50) begin
-        if (SW[0]) begin
+        if (KEY[0] == 1'b0) begin
             y <= IDLE;
 		end
         else
