@@ -40,7 +40,7 @@ module gamescreen_fsm(
                 else
                     next_state = BACKGROUND_SCREEN;
             end
-
+ 
             GAME_WIN_SCREEN: begin
                 if (!RESETN)
                     next_state = TITLE_SCREEN;
