@@ -2,10 +2,15 @@ module speed(CLOCK_50, SW, LEDR);
     input CLOCK_50;
     input [3:0] SW;
     output [2:0] LEDR;
+	 
+	 assign HEnable = SW[3] && !SW[2] && !SW[1] && !SW[0];
+	 assign QEnable = !SW[3] && SW[2] && !SW[1] && !SW[0];
+	 assign EEnable = !SW[3] && !SW[2] && SW[1] && !SW[0];
 
-    half_second h1(CLOCK_50, SW[3], SW[2], SW[1], SW[0], LEDR[2]);
-    quarter_second q1(CLOCK_50, SW[3], SW[2], SW[1], SW[0], LEDR[1]);
-    eigth_second e1(CLOCK_50, SW[3], SW[2], SW[1], SW[0], LEDR[0]);
+
+    half_second h1(CLOCK_50, SW[0], HEnable, QEnable, EEnable, LEDR[2]);
+    quarter_second q1(CLOCK_50, SW[0], HEnable, QEnable, EEnable, LEDR[1]);
+    eigth_second e1(CLOCK_50, SW[0], HEnable, QEnable, EEnable, LEDR[0]);
 endmodule
 
 module half_second(Clock, Resetn, HEnable, QEnable, EEnable, HSecEn);
@@ -15,7 +20,7 @@ module half_second(Clock, Resetn, HEnable, QEnable, EEnable, HSecEn);
 
     always @(posedge Clock)
     begin
-        if (Resetn == 0) begin
+        if (Resetn == 1'b0) begin
             count <= 26'b0;
             HSecEn <= 1'b0;
         end
@@ -23,7 +28,7 @@ module half_second(Clock, Resetn, HEnable, QEnable, EEnable, HSecEn);
             count <= count + 1'b1;
 
             if (count == 26'b1011111010111100001000000) begin           // 25000000
-                count <= 26'b00;
+                count <= 26'b0;
                 HSecEn <= 1'b1;
             end
             else
@@ -39,8 +44,8 @@ module quarter_second(Clock, Resetn, HEnable, QEnable, EEnable, QSecEn);
 
    always @ (posedge Clock) 
    begin
-       if (Resetn == 0) begin
-            count <= 26'b00;
+       if (Resetn == 1'b1) begin
+            count <= 26'b0;
             QSecEn <= 1'b0;
         end
         else if (!HEnable && QEnable && !EEnable) begin
@@ -63,8 +68,8 @@ module eigth_second(Clock, Resetn, HEnable, QEnable, EEnable, ESecEn);
 
    always @ (posedge Clock) 
    begin
-       if (Resetn == 0) begin
-            count <= 26'b00;
+       if (Resetn == 1'b1) begin
+            count <= 26'b0;
             ESecEn <= 1'b0;
         end
         else if (!HEnable && !QEnable && EEnable) begin
