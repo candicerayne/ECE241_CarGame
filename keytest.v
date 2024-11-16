@@ -66,18 +66,23 @@ reg EnterEn, LeftEn, RightEn;
 
 always @(posedge CLOCK_50) begin
 	case (last_data_received)
-	8'h5A: EnterEn <= 1'b1;
-	8'h6B: LeftEn <= 1'b1;
-	8'h74: RightEn <= 1'b1;
-	8'hF0: begin
+	8'h5A: if (ps2_key_pressed)
+				EnterEn <= 1'b1;
+	8'hE0: if (ps2_key_pressed)
+				LeftEn <= 1'b1;
+	8'h6B: if (ps2_key_pressed)
+				LeftEn <= 1'b1;
+	8'h74: if (ps2_key_pressed)
+				RightEn <= 1'b1;
+	8'hF0: if (ps2_key_pressed) begin
 				EnterEn <= 1'b0;
 				LeftEn <= 1'b0;
 				RightEn <= 1'b0;
 			end
 	default: begin
-		EnterEn <= 1'b0;
-		LeftEn <= 1'b0;
-		RightEn <= 1'b0;
+			EnterEn <= 1'b0;
+			LeftEn <= 1'b0;
+			RightEn <= 1'b0;
 	end
 	endcase
 end
