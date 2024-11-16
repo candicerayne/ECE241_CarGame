@@ -55,18 +55,6 @@ module keyboard(CLOCK_50, KEY, PS2_CLK, PS2_DAT, LEDR);
                     else
                         Y = IDLE;
                 end
-			KEY_PRESSED:if (received_data_en == 1'b1)begin
-                        if (key_data == ENTER)            // key_data = 5A
-                            Y = ENTER_KEY;
-                        else if (key_data == EXTENDED)
-                            Y = EXT_MAKE_CODE;
-                        else if (key_data == BREAK)
-                            Y = BREAK_CODE;
-								else
-									Y = KEY_PRESSED;
-							end
-							else
-								Y = KEY_PRESSED;
 					  
         EXT_MAKE_CODE:  if (received_data_en == 1'b1) begin
                             if (key_data == LEFT)             	// key_data = E0,6B
