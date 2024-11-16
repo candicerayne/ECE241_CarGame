@@ -1,5 +1,5 @@
 
-module keytest(
+module PS2_keyboard(
 	// Inputs
 	CLOCK_50,
 	KEY,
