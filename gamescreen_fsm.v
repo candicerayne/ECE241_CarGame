@@ -4,7 +4,7 @@ module gamescreen_fsm(
     input ENTER,   
     input GAME_WIN, 
     input GAME_LOSE, 
-    output reg [1:0] SCREEN
+    output reg [1:0] SCREEN 
 );
 
 
