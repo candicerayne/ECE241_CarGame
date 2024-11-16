@@ -13,11 +13,8 @@ module gamescreendisplay(
     output VGA_SYNC_N,
     output VGA_CLK
 );
-
-    // FSM screen state
     wire [1:0] SCREEN;
 
-    // Instantiate the FSM
     gamedisplay_fsm fsm (
         .CLOCK_50(CLOCK_50),
         .RESETN(RESETN),
@@ -41,7 +38,6 @@ module gamescreendisplay(
         .q(title_color)
     );
 
-    // Instantiate the background screen
     background binst (
         .address(pixel_address),
         .clock(CLOCK_50),
@@ -50,7 +46,6 @@ module gamescreendisplay(
         .q(background_color)
     );
 
-    // Instantiate the win screen
     win winst (
         .address(pixel_address),
         .clock(CLOCK_50),
@@ -59,7 +54,6 @@ module gamescreendisplay(
         .q(win_color)
     );
 
-    // Instantiate the lose screen
     lose linst (
         .address(pixel_address),
         .clock(CLOCK_50),
@@ -68,7 +62,6 @@ module gamescreendisplay(
         .q(lose_color)
     );
 
-    // Screen selection logic
     always @(*) begin
         case (SCREEN)
             2'b00: VGA_COLOR = {title_color, title_color};   
