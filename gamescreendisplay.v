@@ -1,9 +1,7 @@
 module gamescreendisplay(
     input CLOCK_50,
-    input RESETN,
-    input ENTER,
-    input GAME_WIN,
-    input GAME_LOSE,
+    input [0:1] SW,
+    input [3:0] KEY, // KEY[0]: GAME_WIN, KEY[1]: GAME_LOSE, KEY[2]: ENTER, KEY[3]: RESETN
     output [7:0] VGA_R,
     output [7:0] VGA_G,
     output [7:0] VGA_B,
@@ -13,69 +11,83 @@ module gamescreendisplay(
     output VGA_SYNC_N,
     output VGA_CLK
 );
-    wire [1:0] SCREEN; 
 
-    gamedisplay_fsm fsm (
+    // FSM output
+    wire [1:0] SCREEN;
+
+    // Counters
+    reg [2:0] XC = 0;  // Column counter (3-bit for object width)
+    reg [2:0] YC = 0;  // Row counter (3-bit for object height)
+
+    // Signals to enable counters
+    wire column_done;
+    wire row_done;
+
+    // Fixed starting position (0,0)
+    wire [7:0] X = 8'd0;    // Start at X = 0
+    wire [6:0] Y = 7'd0;    // Start at Y = 0
+    wire [7:0] VGA_X = X + XC;
+    wire [6:0] VGA_Y = Y + YC;
+
+    // Color signals from different screens
+    wire [2:0] title_color, background_color, win_color, lose_color;
+
+    // Selected color
+    reg [2:0] selected_color;
+
+    // Instantiate FSM
+    gamescreen_fsm fsm_inst (
         .CLOCK_50(CLOCK_50),
-        .RESETN(RESETN),
-        .ENTER(ENTER),
-        .GAME_WIN(GAME_WIN),
-        .GAME_LOSE(GAME_LOSE),
+        .KEY(KEY),
         .SCREEN(SCREEN)
     );
 
-    reg [7:0] VGA_COLOR;
-    wire [3:0] title_color, background_color, win_color, lose_color;
-    wire [4:0] pixel_address;
+    // Column counter logic
+    always @(posedge CLOCK_50 or negedge SW[1]) begin
+        if (!SW[1])
+            XC <= 0;
+        else if (column_done)
+            XC <= 0;
+        else
+            XC <= XC + 1;
+    end
 
-    assign pixel_address = VGA_X[4:0] + VGA_Y[4:0];
+    assign column_done = (XC == 3'b111); // Counter for 8 columns (0 to 7)
 
-    title tinst (
-        .address(pixel_address),
-        .clock(CLOCK_50),
-        .data(4'b0),
-        .wren(1'b0),
-        .q(title_color)
-    );
+    // Row counter logic
+    always @(posedge CLOCK_50 or negedge SW[1]) begin
+        if (!SW[1])
+            YC <= 0;
+        else if (row_done)
+            YC <= 0;
+        else if (column_done)
+            YC <= YC + 1;
+    end
 
-    background binst (
-        .address(pixel_address),
-        .clock(CLOCK_50),
-        .data(4'b0),
-        .wren(1'b0),
-        .q(background_color)
-    );
+    assign row_done = (YC == 3'b111); // Counter for 8 rows (0 to 7)
 
-    win winst (
-        .address(pixel_address),
-        .clock(CLOCK_50),
-        .data(4'b0),
-        .wren(1'b0),
-        .q(win_color)
-    );
+    // Instantiate different screen memories
+    title title_mem ({YC, XC}, CLOCK_50, title_color);
+    background background_mem ({YC, XC}, CLOCK_50, background_color);
+    win win_mem ({YC, XC}, CLOCK_50, win_color);
+    lose lose_mem ({YC, XC}, CLOCK_50, lose_color);
 
-    lose linst (
-        .address(pixel_address),
-        .clock(CLOCK_50),
-        .data(4'b0),
-        .wren(1'b0),
-        .q(lose_color)
-    );
-
+    // Screen selection logic based on FSM state
     always @(*) begin
         case (SCREEN)
-            2'b00: VGA_COLOR = {title_color, title_color};   
-            2'b01: VGA_COLOR = {background_color, background_color}; 
-            2'b10: VGA_COLOR = {win_color, win_color};        
-            2'b11: VGA_COLOR = {lose_color, lose_color};   
-            default: VGA_COLOR = 8'b000;       
+            2'b00: selected_color = title_color;       // TITLE_SCREEN
+            2'b01: selected_color = background_color;  // BACKGROUND_SCREEN
+            2'b10: selected_color = win_color;         // GAME_WIN_SCREEN
+            2'b11: selected_color = lose_color;        // GAME_LOSE_SCREEN
+            default: selected_color = 3'b000;          // Default to black
         endcase
     end
 
+    // VGA adapter instantiation
     vga_adapter VGA (
-        .resetn(RESETN),
+        .resetn(KEY[3]),
         .clock(CLOCK_50),
-        .colour(VGA_COLOR),
+        .colour(selected_color),
         .x(VGA_X),
         .y(VGA_Y),
         .plot(1'b1),
