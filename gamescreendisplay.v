@@ -1,6 +1,6 @@
 module gamescreendisplay(
     input CLOCK_50,
-    input [0:1] SW,
+    input [0:1] SW, // SW[1]: Reset signal
     input [3:0] KEY, // KEY[0]: GAME_WIN, KEY[1]: GAME_LOSE, KEY[2]: ENTER, KEY[3]: RESETN
     output [7:0] VGA_R,
     output [7:0] VGA_G,
@@ -15,13 +15,11 @@ module gamescreendisplay(
     // FSM output
     wire [1:0] SCREEN;
 
-    // Counters
-    reg [2:0] XC = 0;  // Column counter (3-bit for object width)
-    reg [2:0] YC = 0;  // Row counter (3-bit for object height)
-
-    // Signals to enable counters
-    wire column_done;
-    wire row_done;
+    // Column and Row counters
+    wire [2:0] XC;        // Column counter output
+    wire [2:0] YC;        // Row counter output
+    wire column_done;     // Column counter done signal
+    wire row_done;        // Row counter done signal
 
     // Fixed starting position (0,0)
     wire [7:0] X = 8'd0;    // Start at X = 0
@@ -42,29 +40,23 @@ module gamescreendisplay(
         .SCREEN(SCREEN)
     );
 
-    // Column counter logic
-    always @(posedge CLOCK_50 or negedge SW[1]) begin
-        if (!SW[1])
-            XC <= 0;
-        else if (column_done)
-            XC <= 0;
-        else
-            XC <= XC + 1;
-    end
+    // Instantiate Column Counter
+    counter column_counter (
+        .CLOCK(CLOCK_50),
+        .RESETN(SW[1]),
+        .ENABLE(1'b1),  // Always enabled
+        .COUNT(XC),
+        .DONE(column_done)
+    );
 
-    assign column_done = (XC == 3'b111); // Counter for 8 columns (0 to 7)
-
-    // Row counter logic
-    always @(posedge CLOCK_50 or negedge SW[1]) begin
-        if (!SW[1])
-            YC <= 0;
-        else if (row_done)
-            YC <= 0;
-        else if (column_done)
-            YC <= YC + 1;
-    end
-
-    assign row_done = (YC == 3'b111); // Counter for 8 rows (0 to 7)
+    // Instantiate Row Counter
+    counter row_counter (
+        .CLOCK(CLOCK_50),
+        .RESETN(SW[1]),
+        .ENABLE(column_done), // Increment row only after column finishes
+        .COUNT(YC),
+        .DONE(row_done)
+    );
 
     // Instantiate different screen memories
     title title_mem ({YC, XC}, CLOCK_50, title_color);
@@ -106,4 +98,22 @@ module gamescreendisplay(
     defparam VGA.BITS_PER_COLOUR_CHANNEL = 1;
     defparam VGA.BACKGROUND_IMAGE = "black.mif";
 
+endmodule
+
+
+module counter (
+    input CLOCK,
+    input RESETN,
+    input ENABLE,
+    output reg [2:0] COUNT,
+    output DONE
+);
+    always @(posedge CLOCK or negedge RESETN) begin
+        if (!RESETN)
+            COUNT <= 0;
+        else if (ENABLE)
+            COUNT <= (DONE) ? 0 : COUNT + 1;
+    end
+
+    assign DONE = (COUNT == 3'b111); // Done when count reaches max value (7)
 endmodule
