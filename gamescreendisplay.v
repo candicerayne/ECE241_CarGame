@@ -1,7 +1,7 @@
 module gamescreendisplay(
     input CLOCK_50,
-    input [0:1] SW, // SW[1]: Reset signal
-    input [3:0] KEY, // KEY[0]: GAME_WIN, KEY[1]: GAME_LOSE, KEY[2]: ENTER, KEY[3]: RESETN
+    input [0:1] SW,        // SW[1]: Reset signal
+    input [3:0] KEY,       // KEY[0]: GAME_WIN, KEY[1]: GAME_LOSE, KEY[2]: ENTER, KEY[3]: RESETN
     output [7:0] VGA_R,
     output [7:0] VGA_G,
     output [7:0] VGA_B,
@@ -16,16 +16,14 @@ module gamescreendisplay(
     wire [1:0] SCREEN;
 
     // Column and Row counters
-    wire [2:0] XC;        // Column counter output
-    wire [2:0] YC;        // Row counter output
-    wire column_done;     // Column counter done signal
-    wire row_done;        // Row counter done signal
+    wire [7:0] XC;         // Column counter output (8 bits for 160 columns)
+    wire [6:0] YC;         // Row counter output (7 bits for 120 rows)
+    wire column_done;      // Column counter done signal
+    wire row_done;         // Row counter done signal
 
     // Fixed starting position (0,0)
-    wire [7:0] X = 8'd0;    // Start at X = 0
-    wire [6:0] Y = 7'd0;    // Start at Y = 0
-    wire [7:0] VGA_X = X + XC;
-    wire [6:0] VGA_Y = Y + YC;
+    wire [7:0] VGA_X = XC; // Use XC directly for VGA X coordinate
+    wire [6:0] VGA_Y = YC; // Use YC directly for VGA Y coordinate
 
     // Color signals from different screens
     wire [2:0] title_color, background_color, win_color, lose_color;
@@ -40,17 +38,17 @@ module gamescreendisplay(
         .SCREEN(SCREEN)
     );
 
-    // Instantiate Column Counter
-    counter column_counter (
+    // Instantiate Column Counter (Counts 0 to 159)
+    counter #(.MAX_COUNT(159)) column_counter (
         .CLOCK(CLOCK_50),
         .RESETN(SW[1]),
-        .ENABLE(1'b1),  // Always enabled
+        .ENABLE(1'b1),      // Always enabled
         .COUNT(XC),
         .DONE(column_done)
     );
 
-    // Instantiate Row Counter
-    counter row_counter (
+    // Instantiate Row Counter (Counts 0 to 119)
+    counter #(.MAX_COUNT(119)) row_counter (
         .CLOCK(CLOCK_50),
         .RESETN(SW[1]),
         .ENABLE(column_done), // Increment row only after column finishes
@@ -100,12 +98,12 @@ module gamescreendisplay(
 
 endmodule
 
-
 module counter (
     input CLOCK,
     input RESETN,
     input ENABLE,
-    output reg [2:0] COUNT,
+    parameter MAX_COUNT = 159, // Default max count for columns
+    output reg [$clog2(MAX_COUNT+1)-1:0] COUNT,
     output DONE
 );
     always @(posedge CLOCK or negedge RESETN) begin
@@ -115,5 +113,5 @@ module counter (
             COUNT <= (DONE) ? 0 : COUNT + 1;
     end
 
-    assign DONE = (COUNT == 3'b111); // Done when count reaches max value (7)
+    assign DONE = (COUNT == MAX_COUNT); // Done when count reaches max value
 endmodule
