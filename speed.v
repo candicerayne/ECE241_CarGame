@@ -1,18 +1,16 @@
-module speed(CLOCK_50, SW, LEDR);
+module speed(CLOCK_50, SW, HSecEn, QSecEn, ESecEn);
     input CLOCK_50;
     input [3:0] SW;
-    output [2:0] LEDR;
+	output HSecEn, QSecEn, ESecEn;
+	wire HEnable, QEnable, EEnable;
 	 
-	 wire HEnable, QEnable, EEnable;
-	 
-	 assign HEnable = SW[2];
-	 assign QEnable = SW[1];
-	 assign EEnable = SW[0];
+	assign HEnable = SW[2];
+	assign QEnable = SW[1];
+	assign EEnable = SW[0];
 
-
-    half_second h1(CLOCK_50, SW[3], HEnable, QEnable, EEnable, LEDR[2]);
-    quarter_second q1(CLOCK_50, SW[3], HEnable, QEnable, EEnable, LEDR[1]);
-    eighth_second e1(CLOCK_50, SW[3], HEnable, QEnable, EEnable, LEDR[0]);
+    half_second h1(CLOCK_50, SW[3], HEnable, QEnable, EEnable, HSecEn);
+    quarter_second q1(CLOCK_50, SW[3], HEnable, QEnable, EEnable, QSecEn);
+    eighth_second e1(CLOCK_50, SW[3], HEnable, QEnable, EEnable, ESecEn);
 endmodule
 
 module half_second(Clock, Resetn, HEnable, QEnable, EEnable, HSecEn);
@@ -46,7 +44,7 @@ module quarter_second(Clock, Resetn, HEnable, QEnable, EEnable, QSecEn);
 
    always @ (posedge Clock) 
    begin
-       if (Resetn == 1'b0) begin
+        if (Resetn == 1'b0) begin
             count <= 26'b0;
             QSecEn <= 1'b0;
         end
@@ -70,7 +68,7 @@ module eighth_second(Clock, Resetn, HEnable, QEnable, EEnable, ESecEn);
 
    always @ (posedge Clock) 
    begin
-       if (Resetn == 1'b0) begin
+        if (Resetn == 1'b0) begin
             count <= 26'b0;
             ESecEn <= 1'b0;
         end
