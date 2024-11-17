@@ -1,12 +1,18 @@
 module gamescreen_fsm(
     input CLOCK_50, 
-    input RESETN, 
-    input ENTER,   
-    input GAME_WIN, 
-    input GAME_LOSE, 
+    input [3:0] KEY,
     output reg [1:0] SCREEN 
 );
 
+	 wire GAME_WIN;
+	 wire GAME_LOSE;
+	 wire ENTER;
+	 wire RESETN;
+
+	 assign GAME_WIN = KEY[0];
+	 assign GAME_LOSE = KEY[1];
+	 assign ENTER = KEY[2];
+	 assign RESETN = KEY[3];
 
     parameter TITLE_SCREEN = 2'b00;
     parameter BACKGROUND_SCREEN = 2'b01;
@@ -42,14 +48,14 @@ module gamescreen_fsm(
             end
  
             GAME_WIN_SCREEN: begin
-                if (!RESETN)
+                if (RESETN)
                     next_state = TITLE_SCREEN;
                 else
                     next_state = GAME_WIN_SCREEN;
             end
 
             GAME_LOSE_SCREEN: begin
-                if (!RESETN)
+                if (RESETN)
                     next_state = TITLE_SCREEN;
                 else
                     next_state = GAME_LOSE_SCREEN;
