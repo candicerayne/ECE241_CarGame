@@ -39,7 +39,7 @@ module gamescreendisplay(
     );
 
     // Instantiate Column Counter (Counts 0 to 159)
-    counter #(.MAX_COUNT(159)) column_counter (
+    column_counter col_counter_inst (
         .CLOCK(CLOCK_50),
         .RESETN(SW[1]),
         .ENABLE(1'b1),      // Always enabled
@@ -48,10 +48,10 @@ module gamescreendisplay(
     );
 
     // Instantiate Row Counter (Counts 0 to 119)
-    counter #(.MAX_COUNT(119)) row_counter (
+    row_counter row_counter_inst (
         .CLOCK(CLOCK_50),
         .RESETN(SW[1]),
-        .ENABLE(column_done), // Increment row only after column finishes
+        .ENABLE(column_done),
         .COUNT(YC),
         .DONE(row_done)
     );
@@ -98,14 +98,34 @@ module gamescreendisplay(
 
 endmodule
 
-module counter (
+module column_counter (
     input CLOCK,
     input RESETN,
     input ENABLE,
-    parameter MAX_COUNT = 159, // Default max count for columns
-    output reg [$clog2(MAX_COUNT+1)-1:0] COUNT,
+    output reg [7:0] COUNT,
     output DONE
 );
+    localparam MAX_COUNT = 159; // Hardcoded for column counter
+
+    always @(posedge CLOCK or negedge RESETN) begin
+        if (!RESETN)
+            COUNT <= 0;
+        else if (ENABLE)
+            COUNT <= (DONE) ? 0 : COUNT + 1;
+    end
+
+    assign DONE = (COUNT == MAX_COUNT); // Done when count reaches max value
+endmodule
+
+module row_counter (
+    input CLOCK,
+    input RESETN,
+    input ENABLE,
+    output reg [6:0] COUNT,
+    output DONE
+);
+    localparam MAX_COUNT = 119; // Hardcoded for row counter
+
     always @(posedge CLOCK or negedge RESETN) begin
         if (!RESETN)
             COUNT <= 0;
