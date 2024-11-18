@@ -146,3 +146,43 @@ module data(
 end
 
 endmodule
+
+module ctrl(
+    input iClock,
+    input iResetn,
+    output reg ld_background, // Signal to draw the background
+    output reg ld_draw        // Signal to draw the car
+);
+    // States
+    localparam S_BACKGROUND = 1'b0, S_CAR = 1'b1;
+    reg state, next_state;
+
+    always @(posedge iClock or negedge iResetn) begin
+        if (~iResetn) begin
+            state <= S_BACKGROUND; // Start with the background
+        end else begin
+            state <= next_state;
+        end
+    end
+
+    always @(*) begin
+        // Default signals
+        ld_background = 1'b0;
+        ld_draw = 1'b0;
+
+        case (state)
+            S_BACKGROUND: begin
+                ld_background = 1'b1; // Enable background drawing
+                next_state = S_CAR;   // Move to car drawing next
+            end
+            S_CAR: begin
+                ld_draw = 1'b1;       // Enable car drawing
+                next_state = S_BACKGROUND; // Return to background drawing
+            end
+            default: begin
+                next_state = S_BACKGROUND;
+            end
+        endcase
+    end
+endmodule
+
