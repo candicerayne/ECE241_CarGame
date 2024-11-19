@@ -26,13 +26,15 @@ module vga_demo(CLOCK_50, SW, KEY,
 	 reg [6:0] Y;           // starting y location of object
     wire [2:0] XC, YC;      // used to access object memory
     wire Ex, Ey, By, Bx;
-	 wire [7:0] VGA_X;       // x location of each object pixel
-	 wire [6:0] VGA_Y;       // y location of each object pixel
+	 wire [7:0] cVGA_X;       // x location of each object pixel
+	 wire [6:0] cVGA_Y;       // y location of each object pixel
 	 wire [2:0] carcolour;   // color of each object pixel
-	//wire [7:0] bVGA_X;       // x location of each object pixel
-	//wire [6:0] bVGA_Y;       // y location of each object pixel
-	//wire [2:0] backcolour;   // color of each object pixel
-	//reg [2:0] oColour;
+	wire [7:0] bVGA_X;       // x location of each object pixel
+	wire [6:0] bVGA_Y;       // y location of each object pixel
+	wire [2:0] backcolour;   // color of each object pixel
+	reg [2:0] oColour;
+	reg [7:0] oX;
+	reg [6:0] oY;
 	
    
 
@@ -49,13 +51,13 @@ module vga_demo(CLOCK_50, SW, KEY,
     car5 U6 ({YC,XC}, CLOCK_50, carcolour);
     // the object memory takes one clock cycle to provide data, so store
     // the current values of (x,y) addresses to remain synchronized
-    regn U7 (X + XC, KEY[0], 1'b1, CLOCK_50, VGA_X);
+    regn U7 (X + XC, KEY[0], 1'b1, CLOCK_50, cVGA_X);
         defparam U7.n = 8;
-    regn U8 (Y + YC, KEY[0], 1'b1, CLOCK_50, VGA_Y);
+    regn U8 (Y + YC, KEY[0], 1'b1, CLOCK_50, cVGA_Y);
         defparam U8.n = 7;
 		  
 		  
-	/*	reg [7:0] backX;
+	reg [7:0] backX;
 		reg [6:0] backY;
 	 count B3 (CLOCK_50, KEY[0], Bx, XB);    // column counter
         defparam B3.n = 3;
@@ -73,7 +75,7 @@ module vga_demo(CLOCK_50, SW, KEY,
 	  regn B7 (backX + XB, KEY[0], 1'b1, CLOCK_50, bVGA_X);
         defparam B7.n = 8;
     regn B8 (backY + YB, KEY[0], 1'b1, CLOCK_50, bVGA_Y);
-        defparam B8.n = 7;*/
+        defparam B8.n = 7;
 
     assign plot = 1'b1;
 	 
@@ -110,35 +112,38 @@ module vga_demo(CLOCK_50, SW, KEY,
 					next_X = 8'd75;
 					next_Y = 7'd70;
 					next = 2'b01;
-					//resetb = 1'b1;
+				end 
+				else begin
+					next_X = 8'd0;
+					next_Y = 7'd0;
+					next = 2'b00;
 				end 
 	2'b01: begin
 			if (LeftEn == 1'b1) begin
 				next_X = X - 8'd35;
 				next_Y = 7'd70;
 				next = 2'b01;
-				//resetb = 1'b1;
 				end
 			else if (RightEn == 1'b1) begin
 				next_X = X + 8'd35;
 				next_Y = 7'd70;
 				next = 2'b01;
-				//resetb = 1'b1;
 				end
 			else begin
 				next_X = X;
 				next_Y = 7'd70;
 				next = 2'b01;
-				//resetb = 1'b1;
 				end
 			next = 2'b01;
 			end
-	//2'b10: resetb = 1'b0;
-	default: next = 2'b00;
+	default: begin
+				next = 2'b00;
+				next_X = 8'd75;
+				next_Y = 7'd70;
+				end
 	endcase
 	end
-	
-	
+		
 	always @(posedge Clock)
 	begin
 		if (KEY[0] == 1'b0) begin
@@ -153,25 +158,44 @@ module vga_demo(CLOCK_50, SW, KEY,
 		end
 	end
 	
-	/*always @(posedge Clock)
+	reg [1:0] draw, next_draw;
+	
+	always @(draw)
 	begin
-	case (resetb)
-	1'b0: oColour <= carcolour;
-	1'b1: begin
-			backX <= 0;
-			backY <= 0;
-			oColour <= backcolour;
+	case (draw)
+	2'b00: begin
+			oColour = carcolour;
+			oY = cVGA_Y;
+			oX = cVGA_X;
+			next_draw = 2'b01;
 			end
+	2'b01: begin
+			oColour = backcolour;
+			oY = bVGA_X;
+			oX = bVGA_Y;
+			next_draw = 2'b00;
+			end
+	default: begin
+				next_draw = 2'b00;
+				end
 	endcase
-	end*/
+	end
+	
+	always @(posedge CLOCK_50)
+	begin
+	if (KEY[0])
+		draw <= 2'b00;
+	else
+		draw <= next_draw;
+	end
 
     // connect to VGA controller
     vga_adapter VGA (
 			.resetn(KEY[0]),
 			.clock(CLOCK_50),
-			.colour(carcolour),
-			.x(VGA_X),
-			.y(VGA_Y),
+			.colour(oColour),
+			.x(oX),
+			.y(oY),
 			.plot(1'b1),
 			.VGA_R(VGA_R),
 			.VGA_G(VGA_G),
