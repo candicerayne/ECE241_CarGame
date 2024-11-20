@@ -1,27 +1,29 @@
-module Gamestate(CLOCK_50, KEY, SW, PS2_CLK, PS2_DAT, Load, DriveEn);
+module GameState(CLOCK_50, KEY, SW, DriveEn, coin_count, win_screen, lose_screen);
     // port instantiations
-    input CLOCK_50, EnterEn, Load;
+    input CLOCK_50;//EnterEn, Load;
     input [2:0] SW;
     input [0:0] KEY;
     output DriveEn, coin_count, win_screen, lose_screen;
+	wire HitEn, DriveEn, coin_count, win_screen, lose_screen;
+	
+	wire Load, EnterEn, LeftEn, RightEn, max_coin, CoinEn, PoliceEn, HSecEn, QSecEn, ESecEn;
 
     // wires and regs
-    wire EnterEn, LeftEn, RightEn, max_coin, CoinEn, PoliceEn, HSecEn, QSecEn, ESecEn;
     wire [3:0] Score;
-    reg Clock;
+    wire Clock;
 
     // port assignments
     assign Reset = KEY[0];
 
     // module instantiations
     keyboard k1(.CLOCK_50(CLOCK_50), .KEY(Reset), .PS2_CLK(PS2_CLK), PS2_DAT(PS2_DAT), .EnterEn(EnterEn), .LeftEn(LeftEn), .RightEn(RightEn));
-    speed s1(.CLOCK_50(CLOCK_50), SW, HSecEn, QSecEn, ESecEn);
+    speed s1(.CLOCK_50(CLOCK_50), .SW(SW), .KEY(KEY[0]), .HSecEn(HSecEn), .QSecEn(QSecEn), .ESecEn(ESecEn));
     select_speed s2(.SW(SW), .HSecEn(HSecEn), .QSecEn(QSecEn), .ESecEn(ESecEn), .Clock(Clock));
-    score s3(.Clock(Clock), .Enable(coin_count), .Resetn(Reset), .Score(Score), .GameOver(max_coin));
+    score s3(.CLOCK_50(CLOCK_50), .Enable(coin_count), .Resetn(Reset), .Score(Score), .GameOver(max_coin));
     hit_detector h1(.CLOCK_50(CLOCK_50), .CoinEn(CoinEn), .PoliceEn(PoliceEn));
 
     // GameState fsm
-    parameter WAIT = 3'b000, LOAD = 43'b0001, DRIVING = 3'b010, HIT = 3'b011, COIN = 3'b100, WIN = 3'b101, LOSE = 3'b110;
+    parameter WAIT = 3'b000, LOAD = 3'b001, DRIVING = 3'b010, HIT = 3'b011, COIN = 3'b100, WIN = 3'b101, LOSE = 3'b110;
     reg [2:0] y, Y;
 
     always @(*) begin
@@ -61,7 +63,7 @@ module Gamestate(CLOCK_50, KEY, SW, PS2_CLK, PS2_DAT, Load, DriveEn);
     end
 
     always @(posedge Clock) begin
-        if (Reset == 1'b0)
+        if (Reset == 1'b1)
             y <= 3'b0;
         else
             y <= Y;
@@ -83,7 +85,7 @@ module select_speed(SW, HSecEn, QSecEn, ESecEn, Clock);
         3'b100: Clock = HSecEn;
         3'b010: Clock = QSecEn;
         3'b001: Clock = ESecEn;
-        default: Clock = 3'b000;
+        default: Clock = 1'b0;
         endcase
     end
 endmodule
