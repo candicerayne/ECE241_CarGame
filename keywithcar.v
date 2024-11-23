@@ -56,27 +56,6 @@ module vga_demo(CLOCK_50, SW, KEY,
     regn U8 (Y + YC, KEY[0], 1'b1, CLOCK_50, cVGA_Y);
         defparam U8.n = 7;
 		  
-		  
-	reg [7:0] backX;
-		reg [6:0] backY;
-	 count B3 (CLOCK_50, KEY[0], Bx, XB);    // column counter
-        defparam B3.n = 3;
-    // enable XC when VGA plotting starts
-    regn B5 (1'b1, KEY[0], 1'b1, CLOCK_50, Bx);
-        defparam B5.n = 1;
-    count B4 (CLOCK_50, KEY[0], By, YB);    // row counter
-        defparam U4.n = 3;
-    // enable YC at the end of each object row
-    assign By = (XC == 3'b111);
-	 
-	background B2 ({YB,XB}, CLOCK_50, backcolour);
-    // read a pixel color from object memory
-
-	  regn B7 (backX + XB, KEY[0], 1'b1, CLOCK_50, bVGA_X);
-        defparam B7.n = 8;
-    regn B8 (backY + YB, KEY[0], 1'b1, CLOCK_50, bVGA_Y);
-        defparam B8.n = 7;
-
     assign plot = 1'b1;
 	 
 	 
@@ -170,9 +149,9 @@ module vga_demo(CLOCK_50, SW, KEY,
 			next_draw = 2'b01;
 			end
 	2'b01: begin
-			oColour = backcolour;
-			oY = bVGA_X;
-			oX = bVGA_Y;
+			oColour = 3'b000;
+			oY = cVGA_X;
+			oX = cVGA_Y;
 			next_draw = 2'b00;
 			end
 	default: begin
