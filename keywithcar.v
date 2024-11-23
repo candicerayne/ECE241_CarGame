@@ -55,7 +55,7 @@ module vga_demo(CLOCK_50, SW, KEY,
         defparam U7.n = 8;
     regn U8 (Y + YC, KEY[0], 1'b1, CLOCK_50, cVGA_Y);
         defparam U8.n = 7;
-		  
+
     assign plot = 1'b1;
 	 
 	 
@@ -139,34 +139,26 @@ module vga_demo(CLOCK_50, SW, KEY,
 	
 	reg [1:0] draw, next_draw;
 	
-always @(posedge CLOCK_50 or negedge KEY[0]) begin
-    if (!KEY[0]) begin
-        draw <= 2'b00;
-        oColour <= carcolour;
-        oX <= cVGA_X;
-        oY <= cVGA_Y;
-    end else begin
-        case (draw)
-        2'b00: begin
-            // Draw the car
-            oColour <= carcolour; // Car's actual color
-            oX <= cVGA_X;
-            oY <= cVGA_Y;
-            draw <= 2'b01;
-        end
-        2'b01: begin
-            // Erase the car (draw black square)
-            oColour <= 3'b000; // Black
-            oX <= cVGA_X;
-            oY <= cVGA_Y;
-            draw <= 2'b00; // Cycle back to drawing state
-        end
-        default: begin
-            draw <= 2'b00; // Default to drawing state
-        end
-        endcase
-    end
-
+	always @(draw)
+	begin
+	case (draw)
+	2'b00: begin
+			oColour = carcolour;
+			oY = cVGA_Y;
+			oX = cVGA_X;
+			next_draw = 2'b01;
+			end
+	2'b01: begin
+			oColour = 3'b000;
+			oY = cVGA_X;
+			oX = cVGA_Y;
+			next_draw = 2'b00;
+			end
+	default: begin
+				next_draw = 2'b00;
+				end
+	endcase
+	end
 	
 	always @(posedge CLOCK_50)
 	begin
