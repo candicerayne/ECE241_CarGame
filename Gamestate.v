@@ -15,12 +15,19 @@ module Gamestate(CLOCK_50, KEY, SW, PS2_CLK, PS2_DAT,VGA_R, VGA_G, VGA_B,
 	 output VGA_CLK;
 	 output [7:0]LEDR;
 
-	 wire HitEn, DriveEn, coin_count, win_screen, lose_screen;
+	 wire HitEn, DriveEn, win_screen, lose_screen;
+	 wire EnterEn, LeftEn, RightEn, max_coin, HSecEn, QSecEn, ESecEn, Reset;
+	 
+	 assign LEDR[1] = max_coin;
+	 assign LEDR[2] = lose_screen;
+	 assign LEDR[3] = win_screen;
+	 assign LEDR[4] = DriveEn;
+	 assign LEDR[5] = PoliceEn;
+	 assign LEDR[6] = CoinEn;
+	 assign LEDR[7] = HitEn;
 	
-	 wire Load, EnterEn, LeftEn, RightEn, max_coin, HSecEn, QSecEn, ESecEn, Reset;
-	
-	 wire [7:0] X;           // starting x location of object
-	 wire [6:0] Y;           // starting y location of object
+	 reg [7:0] X;           // starting x location of object
+	 reg [6:0] Y;           // starting y location of object
     wire [7:0] XC;
 	 wire [6:0] YC;      // used to access object memory
     wire Ex, Ey;
@@ -40,10 +47,7 @@ module Gamestate(CLOCK_50, KEY, SW, PS2_CLK, PS2_DAT,VGA_R, VGA_G, VGA_B,
     assign Reset = KEY[0];
 	 parameter WIDTH = 8'd160;
 	
-	 assign LEDR[2:0] = uy;
-	 assign X=0;
-	 assign Y=0;
-	 assign HitEn = KEY[3];
+	 assign HitEn = ~KEY[3];
 	 assign address = ((YC*WIDTH)+XC);
 
     // module instantiations
@@ -59,6 +63,9 @@ module Gamestate(CLOCK_50, KEY, SW, PS2_CLK, PS2_DAT,VGA_R, VGA_G, VGA_B,
 	 
     speed s1(.CLOCK_50(CLOCK_50), .SW(SW[2:0]), .KEY(KEY[0]), .HSecEn(HSecEn), .QSecEn(QSecEn), .ESecEn(ESecEn));
     select_speed s2(.SW(SW), .HSecEn(HSecEn), .QSecEn(QSecEn), .ESecEn(ESecEn), .Clock(Clock));
+	 score s3(.Clock(Clock), .Enable(coin_count), .Resetn(Reset), .Score(Score), .GameOver(max_coin));
+	 game g_fsm(Clock, KEY, EnterEn, PoliceEn, CoinEn, HitEn, max_coin, DriveEn, coin_count, win_screen, lose_screen);
+	 
 	 
 	 background b1(address, CLOCK_50, backcolour);
 	 title t1(address, CLOCK_50, titlecolour);
@@ -79,14 +86,13 @@ module Gamestate(CLOCK_50, KEY, SW, PS2_CLK, PS2_DAT,VGA_R, VGA_G, VGA_B,
         defparam U7.n = 8;
     regn U8 (Y+YC, KEY[0], 1'b1, CLOCK_50, oY);
         defparam U8.n = 7;
-    
-	 score s3(.Clock(Clock), .Enable(coin_count), .Resetn(Reset), .Score(Score), .GameOver(max_coin));
-	 //hit_detector h1(.CLOCK_50(CLOCK_50), .CoinEn(CoinEn), .PoliceEn(PoliceEn));
+		  
+	
 	 
 	 
-	 wire CoinEn, PoliceEn;
-	 assign CoinEn = KEY[1];
-	 assign PoliceEn = KEY[2];
+	 wire PoliceEn, CoinEn;
+	 assign CoinEn = ~KEY[1];
+	 assign PoliceEn = ~KEY[2];
 
 	 
 	  vga_adapter VGA (
@@ -108,55 +114,6 @@ module Gamestate(CLOCK_50, KEY, SW, PS2_CLK, PS2_DAT,VGA_R, VGA_G, VGA_B,
 		defparam VGA.MONOCHROME = "FALSE";
 		defparam VGA.BITS_PER_COLOUR_CHANNEL = 1;
 		defparam VGA.BACKGROUND_IMAGE = "black.mif";
-		
-
-    // GameState fsm
-    parameter WAIT = 3'b000, DRIVING = 3'b001, HIT = 3'b010, WIN = 3'b100, LOSE = 3'b101;
-    reg [2:0] uy, Yy;
-
-    always @(*) begin
-    case (uy)
-    WAIT:   if (EnterEn)
-                Yy = DRIVING;
-            else
-                Yy = WAIT;
-    DRIVING:    if (HitEn)
-                    Yy = HIT;
-                else
-                    Yy = DRIVING;
-    HIT:    /*if  (CoinEn)
-                Yy = COIN;
-            else*/ if (PoliceEn)
-                Yy = LOSE;
-            else
-                Yy = HIT;
-  /*  COIN:   if (max_coin)
-                Yy = WIN;
-            else
-                Yy = DRIVING;*/
-    WIN:    if (!Reset)
-                Yy = WAIT;
-            else
-                Yy = WIN;
-    LOSE:   if (!Reset)
-                Yy = WAIT;
-            else
-                Yy = LOSE;
-    default: Yy = WAIT;
-    endcase
-    end
-
-    always @(posedge Clock) begin
-        if (!KEY[0])
-            uy <= 3'b0;
-        else
-            uy <= Yy;
-    end
-
-    assign DriveEn =  (uy == DRIVING);
-    //assign coin_count = (uy == COIN);
-    assign win_screen = (uy == WIN);
-    assign lose_screen = (uy == LOSE);
 	 
 	 
 	 
@@ -190,6 +147,28 @@ module Gamestate(CLOCK_50, KEY, SW, PS2_CLK, PS2_DAT,VGA_R, VGA_G, VGA_B,
 	 end
 	 
 	 
+
+	 // moving background
+	 	always @(posedge Clock)
+	begin
+		if (DriveEn) begin
+			if (KEY[0] == 1'b0 || Y == 7'd119 && X == 8'd159) begin
+				X <= 8'd0;
+				Y <= 7'd0;
+				end
+			else begin
+				X <= X;
+				Y <= Y + 1;
+
+			end
+		end
+		else begin
+			X <= 0;
+			Y <= 0;
+		end
+	end
+	 
+	 
 	 wire back, title, wins, loses;
 	 assign back = (screen == GAME);
 	 assign title = (screen == TITLE);
@@ -198,17 +177,27 @@ module Gamestate(CLOCK_50, KEY, SW, PS2_CLK, PS2_DAT,VGA_R, VGA_G, VGA_B,
 	 
 	 always @(posedge CLOCK_50)
 	 begin
-		if (back)
-			oColour <= backcolour;
-		else if  (title)
-			oColour <= titlecolour;
-		else if  (wins)
+	   if  (title) begin
+			  oColour <= titlecolour;
+			  end
+		else if (back)
+				oColour <= backcolour;
+		else if  (wins) begin
 			oColour <= wincolour;
-		else if  (loses)
+			end
+		else if  (loses) begin
 			oColour <= losecolour;
-		else
+			end
+		else begin
 			oColour <= 3'b000;
+			end
 	 end
+
+	 
+	 
+	 
+	 
+	 
 endmodule
 
 module select_speed(SW, HSecEn, QSecEn, ESecEn, Clock);
@@ -261,3 +250,65 @@ module rowcount (Clock, Resetn, E, Q);
             Q <= Q + 1;
 
 endmodule
+
+
+
+
+module game(Clock, KEY, EnterEn, PoliceEn, CoinEn, HitEn, max_coin, DriveEn, coin_count, win_screen, lose_screen);
+	input Clock, EnterEn, PoliceEn, CoinEn, HitEn, max_coin;
+	input [3:0] KEY;
+	output DriveEn, coin_count, win_screen, lose_screen;
+	// GameState fsm
+    parameter WAIT = 3'b000, DRIVING = 3'b001, HIT = 3'b010, COIN = 3'b011, WIN = 3'b100, LOSE = 3'b101;
+    reg [2:0] uy, Yy;
+
+    always @(*) begin
+    case (uy)
+    WAIT:   if (EnterEn && !HitEn && !PoliceEn)
+                Yy = DRIVING;
+            else
+                Yy = WAIT;
+    DRIVING:    if (HitEn && !EnterEn)
+                    Yy = HIT;
+                else
+                    Yy = DRIVING;
+    HIT:    if  (CoinEn)
+                Yy = COIN;
+            else if (PoliceEn && !EnterEn)
+                Yy = LOSE;
+            else
+                Yy = HIT;
+    COIN:   if (max_coin)
+                Yy = WIN;
+            else
+                Yy = DRIVING;
+	 WIN:    if (!KEY[0])
+                Yy = WAIT;
+            else
+                Yy = WIN;
+    LOSE:   if (!KEY[0])
+                Yy = WAIT;
+            else
+                Yy = LOSE;
+    default: Yy = WAIT;
+    endcase
+    end
+
+    always @(posedge Clock) begin
+        if (!KEY[0])
+            uy <= 3'b0;
+        else
+            uy <= Yy;
+    end
+
+    assign DriveEn = (uy == DRIVING) || (uy == COIN) || (uy == HIT);
+    assign coin_count = (uy == COIN);
+    assign win_screen = (uy == WIN);
+    assign lose_screen = (uy == LOSE);
+endmodule
+
+
+
+
+
+
