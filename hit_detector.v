@@ -1,8 +1,9 @@
-module hit_detector(CLOCK_50, EnterEn, x_car, x_po, y_po, x_coin, y_coin, CoinEn, PoliceEn);
+module hit_detector(CLOCK_50, KEY, EnterEn, x_car, x_po, y_po, x_coin, y_coin, CoinEn, PoliceEn);
     input CLOCK_50, EnterEn;
+    input [0:0] KEY;
     input [4:0] x_car, x_po, y_po;
     input [2:0] x_coin, y_coin;
-    output reg CoinEn, PoliceEn;
+    output CoinEn, PoliceEn;
 
     parameter IDLE = 2'b00, NO_HIT = 2'b01, COIN = 2'b10, POLICE = 2'b11;
     reg [1:0] current, next;
@@ -15,15 +16,15 @@ module hit_detector(CLOCK_50, EnterEn, x_car, x_po, y_po, x_coin, y_coin, CoinEn
                 next = IDLE;
         end
         NO_HIT: begin
-                if ((y_po = 7'd70) && (x_car > x_po) && (x_car < x_po + 5'd20))  // police <- car
+            if ((y_po == 7'd70) && (x_car > x_po) && (x_car < x_po + 5'd20))  // police <- car
                     next = POLICE;
-                else if ((y_po = 7'd70) && (x_po < x_car + 5'd20) && (x_po > x_car))  // car -> police
+            else if ((y_po == 7'd70) && (x_po < x_car + 5'd20) && (x_po > x_car))  // car -> police
                     next = POLICE;
-                else if ((y_coin = 7'd70) && (x_car > x_coin) && (x_car < x_coin + 3'd8)) // 8x8
+            else if ((y_coin == 7'd70) && (x_car > x_coin) && (x_car < x_coin + 3'd8)) // 8x8
                     next = COIN;
-                else if ((y_coin = 7'd70) && (xx_coin < x_car + 3'd8) && (x_coin > x_car)) // 8x8
+            else if ((y_coin == 7'd70) && (xx_coin < x_car + 3'd8) && (x_coin > x_car)) // 8x8
                     next = COIN;
-                else
+            else
                     next = NO_HIT;
         end
         COIN: begin
