@@ -5,7 +5,7 @@
 *   coordinates are displayed (in hexadecimal) on (HEX3-2,HEX1-0). Finally, press KEY[3]
 *   to draw the pattern at location (x,y).
 */
-module background_scroll(CLOCK_50, SW, KEY,
+module vga_demo(CLOCK_50, SW, KEY,
 				VGA_R, VGA_G, VGA_B,
 				VGA_HS, VGA_VS, VGA_BLANK_N, VGA_SYNC_N, VGA_CLK, PS2_CLK, PS2_DAT);
 	
@@ -30,20 +30,24 @@ module background_scroll(CLOCK_50, SW, KEY,
 	 wire [7:0] VGA_X;       // x location of each object pixel
 	 wire [6:0] VGA_Y;       // y location of each object pixel
 	 wire [2:0] VGA_COLOUR;   // color of each object pixel
+	 wire [14:0] address;
+	 parameter WIDTH = 8'd160;
+	 
+	 assign address = ((YC*WIDTH)+XC);
 	
    
 
-    count U3 (CLOCK_50, KEY[0], Ex, XC);    // column counter
+    colcount U3 (CLOCK_50, KEY[0], Ex, XC);    // column counter
         defparam U3.n = 8;
     // enable XC when VGA plotting starts
     regn U5 (1'b1, KEY[0], 1'b1, CLOCK_50, Ex);
         defparam U5.n = 8;
-    count U4 (CLOCK_50, KEY[0], Ey, YC);    // row counter
+    rowcount U4 (CLOCK_50, KEY[0], Ey, YC);    // row counter
         defparam U4.n = 7;
     // enable YC at the end of each object row
-    assign Ey = (XC == 8'b10100000);
+    assign Ey = (XC == 8'd159); //160 in binary
 
-    background U6 ({YC,XC}, CLOCK_50, VGA_COLOUR);
+    background U6 (address, CLOCK_50, VGA_COLOUR);
     // the object memory takes one clock cycle to provide data, so store
     // the current values of (x,y) addresses to remain synchronized
     regn U7 (X + XC, KEY[0], 1'b1, CLOCK_50, VGA_X);
@@ -66,7 +70,7 @@ module background_scroll(CLOCK_50, SW, KEY,
 			
 	always @(posedge Clock)
 	begin
-		if (KEY[0] == 1'b0) begin
+		if (KEY[0] == 1'b0 | Y == 7'd119 && X == 8'd159) begin
 			X <= 8'd0;
 			Y <= 7'd0;
 			end
@@ -114,7 +118,19 @@ module regn(R, Resetn, E, Clock, Q);
             Q <= R;
 endmodule
 
-module count (Clock, Resetn, E, Q);
+module rowcount (Clock, Resetn, E, Q);
+    parameter n = 8;
+    input Clock, Resetn, E;
+    output reg [n-1:0] Q;
+
+    always @ (posedge Clock)
+        if (Resetn == 0)
+            Q <= 0;
+        else if (E)
+                Q <= Q + 1;
+endmodule
+
+module colcount (Clock, Resetn, E, Q);
     parameter n = 8;
     input Clock, Resetn, E;
     output reg [n-1:0] Q;
